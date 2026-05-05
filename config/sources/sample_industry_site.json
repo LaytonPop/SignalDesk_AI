@@ -1,0 +1,30 @@
+{
+  "name": "semiconductor_newsroom",
+  "industry": "半导体",
+  "base_url": "https://example.com",
+  "list_url": "https://example.com/news",
+  "list_item_selector": ".news-list .news-item",
+  "article_link_selector": "a.news-link",
+  "article_title_selector": "h1.article-title",
+  "article_content_selector": ".article-body",
+  "article_summary_selector": ".article-summary",
+  "article_published_at_selector": "time",
+  "article_tags_selector": ".article-tags a",
+  "article_table_selector": ".article-body table",
+  "list_published_at_selector": "time",
+  "max_articles": 20,
+  "default_headers": {
+    "User-Agent": "Mozilla/5.0"
+  },
+  "auth": {
+    "mode": "selenium",
+    "login_url": "https://example.com/login",
+    "username_env": "INTEL_ANALYST_DEMO_USERNAME",
+    "password_env": "INTEL_ANALYST_DEMO_PASSWORD",
+    "username_selector": "#username",
+    "password_selector": "#password",
+    "submit_selector": "button[type='submit']",
+    "success_selector": ".account-home",
+    "timeout_seconds": 20
+  }
+}
