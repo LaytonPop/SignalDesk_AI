@@ -1,30 +1,23 @@
 {
-  "name": "semiconductor_newsroom",
+  "name": "szsia_semiconductor_news",
   "industry": "半导体",
-  "base_url": "https://example.com",
-  "list_url": "https://example.com/news",
-  "list_item_selector": ".news-list .news-item",
-  "article_link_selector": "a.news-link",
-  "article_title_selector": "h1.article-title",
-  "article_content_selector": ".article-body",
-  "article_summary_selector": ".article-summary",
-  "article_published_at_selector": "time",
-  "article_tags_selector": ".article-tags a",
-  "article_table_selector": ".article-body table",
+  "base_url": "https://www.szsia.com",
+  "list_url": "https://www.szsia.com/?cat=22",
+  "list_item_selector": "article, .post, .blog-post, .archive article",
+  "article_link_selector": "h2 a, h3 a, .entry-title a, a",
+  "article_title_selector": "h1, .entry-title, .post-title",
+  "article_content_selector": ".entry-content p, .post-content p, .article-content p, .content p",
+  "article_summary_selector": ".entry-summary, .post-excerpt",
+  "article_published_at_selector": "time, .entry-meta, .post-meta, .meta",
+  "article_tags_selector": ".tags a, .post-tags a, .entry-tags a",
+  "article_table_selector": ".entry-content table, .post-content table, .article-content table, .content table",
   "list_published_at_selector": "time",
-  "max_articles": 20,
+  "max_articles": 10,
   "default_headers": {
     "User-Agent": "Mozilla/5.0"
   },
   "auth": {
-    "mode": "selenium",
-    "login_url": "https://example.com/login",
-    "username_env": "INTEL_ANALYST_DEMO_USERNAME",
-    "password_env": "INTEL_ANALYST_DEMO_PASSWORD",
-    "username_selector": "#username",
-    "password_selector": "#password",
-    "submit_selector": "button[type='submit']",
-    "success_selector": ".account-home",
+    "mode": "none",
     "timeout_seconds": 20
   }
 }
