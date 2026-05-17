@@ -20,3 +20,5 @@ data/vectorstore/**
 !data/vectorstore/.gitkeep
 data/reports/**
 !data/reports/.gitkeep
+
+Smart Industry Intelligence Analyst - Swagger UI.pdf
