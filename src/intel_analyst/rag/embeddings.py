@@ -1,7 +1,14 @@
+import os
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
 
 from intel_analyst.core.config import get_settings
+
+# Use hf-mirror when HuggingFace is unreachable (e.g. mainland China)
+os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+# Prevent hanging on hub access when the model is already cached
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 
 def build_embeddings():

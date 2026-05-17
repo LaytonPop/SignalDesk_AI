@@ -1,6 +1,9 @@
 .env
 .pytest_cache/
 .ruff_cache/
+.idea/
+.vscode/
+src/.vscode/
 .venv/
 __pycache__/
 *.pyc
