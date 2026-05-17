@@ -22,3 +22,6 @@ data/reports/**
 !data/reports/.gitkeep
 
 Smart Industry Intelligence Analyst - Swagger UI.pdf
+.env.example
+docs/
+plan/
