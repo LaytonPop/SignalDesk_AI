@@ -1,7 +1,5 @@
 import os
 
-# Must be set before any HuggingFace imports to use mirror in China
-os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 from contextlib import asynccontextmanager
