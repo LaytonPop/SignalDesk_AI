@@ -1,3 +1,10 @@
+"""
+日志初始化。
+
+被 main.py 的 lifespan 在应用启动时调用一次。
+dev 环境日志级别 DEBUG，其他环境 INFO。
+"""
+
 import logging
 
 

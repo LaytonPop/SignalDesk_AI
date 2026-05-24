@@ -1,3 +1,18 @@
+"""
+通用新闻爬虫 —— 当前唯一的爬虫实现。
+
+流程：
+    1. 创建 requests.Session（处理认证）
+    2. 请求列表页 → BeautifulSoup 解析
+    3. 按 list_item_selector 提取列表项，逐个调用 _fetch_article()
+    4. _fetch_article() 请求详情页 → 按 CSS 选择器提取标题/摘要/正文/时间/标签
+    5. 提取 HTML 表格 → 保存 CSV
+    6. 保存原始 HTML（可选）+ 处理后的 JSON → 返回 ArticleRecord
+
+被 CrawlerService.crawl() 调用。
+依赖 SourceConfig 提供的 CSS 选择器来确定如何提取数据。
+"""
+
 import hashlib
 import logging
 from datetime import datetime
@@ -55,6 +70,7 @@ class GenericNewsCrawler(BaseCrawler):
         return articles
 
     def _create_session(self, source: SourceConfig) -> requests.Session:
+        """根据认证配置创建带 cookie 的 requests.Session。"""
         if source.auth.mode == "selenium":
             return login_with_selenium(source.auth)
         return authenticate_requests(source.auth).session
@@ -66,6 +82,7 @@ class GenericNewsCrawler(BaseCrawler):
         article_url: str,
         persist_raw: bool = True,
     ) -> ArticleRecord:
+        """请求单篇文章详情页，提取所有字段，保存原始 HTML 和处理后的 JSON。"""
         response = session.get(article_url, headers=source.default_headers, timeout=20)
         response.raise_for_status()
         html = response.text
@@ -83,6 +100,7 @@ class GenericNewsCrawler(BaseCrawler):
         if persist_raw:
             raw_html_path = self.file_store.save_raw_html(source.name, article_url, html)
 
+        # 表格提取：如果有指定的表格选择器则只提取选中部分，否则提取整个页面
         table_html = html
         if source.article_table_selector:
             selected_tables = soup.select(source.article_table_selector)

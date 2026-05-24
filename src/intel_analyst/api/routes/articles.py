@@ -1,3 +1,10 @@
+"""
+文章列表接口。
+
+GET /api/v1/articles?limit=20 —— 从已处理的 JSON 文件中列出最近的文章。
+被前端文章列表页使用。
+"""
+
 from fastapi import APIRouter
 
 from intel_analyst.schemas.article import ArticleListResponse

@@ -1,3 +1,13 @@
+"""
+HTML 表格提取工具。
+
+extract_tables_from_html(): 用 pandas.read_html() 解析 HTML 中的表格，
+将每个表格保存为 CSV 到 data/tables/{source_name}/ 目录，
+同时生成 ExtractedTable 记录（含行列数、CSV 路径、前 5 行预览）。
+
+被 GenericNewsCrawler._fetch_article() 调用。
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 from re import sub
@@ -47,5 +57,6 @@ def extract_tables_from_html(html: str, source_name: str, article_title: str) ->
 
 
 def _slugify(value: str) -> str:
+    """将文章标题转为安全的文件名片段，去除非字母数字、截断到 80 字符。"""
     clean = sub(r"[^\w\-]+", "_", value.strip().lower())
     return clean[:80] or "article"

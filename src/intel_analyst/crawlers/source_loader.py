@@ -1,3 +1,10 @@
+"""
+站点配置加载器 —— 从 JSON 文件反序列化为 SourceConfig。
+
+相对路径会基于项目根目录（ROOT_DIR）解析。
+被 CrawlerService.crawl() 调用。
+"""
+
 import json
 from pathlib import Path
 

@@ -1,3 +1,10 @@
+"""
+Prompt 模板 —— RAG 问答和日报生成的两个提示词。
+
+build_rag_prompt(): 被 QueryService 使用，用户问题 + 检索文档 → LLM 回答
+build_daily_report_prompt(): 被 ReportService 使用，文章列表 → LLM 生成日报
+"""
+
 from langchain_core.prompts import ChatPromptTemplate
 
 

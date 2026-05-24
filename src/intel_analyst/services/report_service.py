@@ -1,3 +1,17 @@
+"""
+日报生成服务 —— 从已处理文章中拉取最近文章，由 LLM 生成结构化日报。
+
+流程：
+    1. 根据 lookback_hours 筛选文章
+    2. 取前 top_k 篇，拼接内容为上下文
+    3. LLM 生成 Markdown 格式日报（含今日重点、业务影响、风险提示、建议动作）
+    4. 保存到 data/reports/daily_report_{date}.md
+    5. 返回日报 Markdown + 引用 + 文件路径
+
+被 POST /api/v1/reports/daily 调用。
+也被 mcp/server.py 的 generate_daily_brief tool 调用。
+"""
+
 from datetime import datetime, timedelta
 
 from langchain_core.output_parsers import StrOutputParser
@@ -20,6 +34,7 @@ class ReportService:
         self.parser = StrOutputParser()
 
     def generate_daily_report(self, payload: DailyReportRequest) -> DailyReportResponse:
+        # Step 1: 按时间段筛选文章
         cutoff = datetime.utcnow() - timedelta(hours=payload.lookback_hours)
         articles = [
             article
@@ -27,6 +42,8 @@ class ReportService:
             if article.published_at is None or article.published_at >= cutoff
         ]
         selected = articles[: payload.top_k]
+
+        # Step 2: 拼接上下文
         context = "\n\n".join(
             [
                 (
@@ -39,9 +56,12 @@ class ReportService:
                 for article in selected
             ]
         )
+
+        # Step 3: LLM 生成日报
         chain = self.prompt | self.llm | self.parser
         report_markdown = chain.invoke({"context": context or "暂无资讯可生成日报。"})
 
+        # Step 4: 保存日报文件
         report_date = payload.report_date or datetime.utcnow().strftime("%Y-%m-%d")
         filename = f"daily_report_{report_date}.md"
         saved_path = self.file_store.save_json(

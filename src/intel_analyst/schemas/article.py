@@ -1,3 +1,12 @@
+"""
+文章相关的数据结构。
+
+ArticleRecord: 爬取后清洗完成的一篇文章，包含标题、内容、摘要、标签、发布时间、
+            抓取时间、内容哈希、提取的表格等。贯穿整个管道：爬虫产出 → 文件存储 → 向量入库。
+ExtractedTable: HTML 表格提取结果，含行列数和 CSV 路径。
+ArticleListResponse: GET /articles 的返回体。
+"""
+
 from datetime import datetime
 
 from pydantic import BaseModel, Field, HttpUrl

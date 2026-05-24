@@ -1,3 +1,10 @@
+"""
+路由注册中心。
+
+把所有子路由（health、sources、articles、knowledge、reports、pipeline）
+挂载到同一个 APIRouter 上，由 main.py 的 create_app() 统一 include。
+"""
+
 from fastapi import APIRouter
 
 from intel_analyst.api.routes import articles, health, knowledge, pipeline, reports, sources

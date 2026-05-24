@@ -1,4 +1,17 @@
-"""Seed sample data into the vector store for testing the query flow."""
+"""
+示例数据注入服务 —— 在爬虫模块未就绪时，提供模拟文章数据用于测试问答流程。
+
+SAMPLE_ARTICLES 包含 5 篇半导体/芯片行业模拟文章，涵盖了：
+    - 深圳半导体产业链协同大会
+    - 设备材料企业融资
+    - 长三角产业联盟成立
+    - AI 芯片需求爆发
+    - 碳化硅产能提速
+
+被 POST /api/v1/pipeline/seed 调用。
+数据通过 IngestionService.ingest_articles() 写入向量库。
+"""
+
 from datetime import datetime, timezone
 
 from intel_analyst.schemas.article import ArticleRecord
@@ -82,7 +95,7 @@ SAMPLE_ARTICLES = [
 
 
 class SeedService:
-    """Populate the vector store with sample articles for testing."""
+    """将示例文章写入向量库，供测试问答流程之用。"""
 
     def seed(self) -> int:
         service = IngestionService()

@@ -1,3 +1,13 @@
+"""
+爬虫认证模块 —— 处理需要登录的站点。
+
+authenticate_requests(): requests 模式的表单提交登录，返回带 cookie 的 Session。
+login_with_selenium():   selenium 模式，用 headless Chrome 模拟浏览器登录，
+                         提取 cookie 后注入 requests.Session。
+
+被 GenericNewsCrawler._create_session() 调用，根据 AuthConfig.mode 选择认证方式。
+"""
+
 import os
 from dataclasses import dataclass
 
