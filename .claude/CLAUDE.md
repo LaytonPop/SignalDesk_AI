@@ -10,7 +10,7 @@
 ```bash
 # 后端 (Python 3.11+, conda env: singnalDesk)
 cd f:/workspace3/wen/idea/SignalDesk_AI
-"C:/Users/morganWen/.conda/envs/singnalDesk/python.exe" -m uvicorn intel_analyst.main:app --reload --app-dir src --host 127.0.0.1 --port 8000
+& "C:/Users/morganWen/.conda/envs/singnalDesk/python.exe" -m uvicorn intel_analyst.main:app --reload --app-dir src --host 127.0.0.1 --port 8000
 
 # 前端
 cd web
@@ -49,12 +49,12 @@ python -m intel_analyst.mcp.server
 main.py (FastAPI app)
   └── api/router.py (挂载所有子路由, prefix=/api/v1)
         ├── health.py            GET  /health
-        ├── knowledge.py         POST /knowledge/query      → QueryService
-        ├── reports.py           POST /reports/daily        → ReportService
-        ├── sources.py           POST /sources/crawl        → CrawlerService
-        ├── pipeline.py          POST /pipeline/seed
-        │                        POST /pipeline/rebuild-index
-        └── articles.py          GET  /articles
+        ├── knowledge.py         POST /knowledge/query  → QueryService
+        ├── reports.py           POST /reports/daily  → ReportService
+        ├── sources.py           POST /sources/crawl  → CrawlerService
+        ├── pipeline.py          POST /pipeline/seed  → SeedService
+        │                        POST /pipeline/rebuild-index → IngestionService
+        └── articles.py          GET  /articles  → ArticleRepository
 ```
 
 ### 核心调用链
@@ -99,6 +99,15 @@ data/
 | POST | `/api/v1/pipeline/rebuild-index` | 清空向量库，从 processed/ 全量重建索引 |
 | GET | `/api/v1/articles?limit=20` | 文章列表 |
 
+## MCP 工具
+
+| 工具 | 说明 |
+|------|------|
+| `search_intelligence(question, top_k)` | RAG 问答 |
+| `generate_daily_brief(report_date, lookback_hours)` | 生成日报 |
+| `crawl_and_ingest(source_path, max_articles)` | 爬取并入库 |
+| Resource: `brief://latest` | 获取最新日报内容 |
+
 ## 关键注意事项
 
 - **Python 环境**：系统默认 `python` 指向 Anaconda3，必须用 `C:/Users/morganWen/.conda/envs/singnalDesk/python.exe`
@@ -111,60 +120,41 @@ data/
 
 ### 高优先级
 
-1. **性能 — Service 每次请求重复初始化**（已部分修复）
+1. **Service 每次请求重复初始化**（已部分修复）
    - `dependencies.py` 的 getter 已加 `@lru_cache`，`build_embeddings()` 也已缓存
    - 但 `VectorStoreManager` 和 `build_chat_model()` 在每个 Service 内部仍然每次 new 实例时重新初始化
 
-2. **健壮性 — 无全局异常处理中间件**
+2. **无全局异常处理中间件**
    - 只有 `sources.py` 做了 try/except，其他路由异常直接 500
    - query 和 report 调外部 API（DeepSeek），网络超时会变成 500 吐给前端
 
-3. **性能 — `pipeline.py` rebuild 无安全防护**
+3. **`pipeline.py` rebuild 无安全防护**
    - 上来就 `reset_collection()` 清空向量库，无误触保护、无确认参数、无 dry-run
 
 ### 中优先级
 
-4. **一致性 — `pipeline.py` seed 不走 DI**
-   - `rebuild_index` 通过 `Depends(get_ingestion_service)` 注入，但 `seed_sample_data` 直接在函数体内 `SeedService()`
-
-5. **一致性 — `pipeline.py` 返回裸 dict**
-   - 返回类型是 `dict[str, int | str]`，其他端点都用 Pydantic `response_model`，OpenAPI schema 会不完整
-
-6. **一致性 — `report_service.py` 方法名与行为不匹配**
-   - `file_store.save_json(...)` 保存的是 `.md` 文件，不是 JSON
-
-7. **一致性 — `report_service.py` 使用已废弃的 `datetime.utcnow()`**
-   - seed_service.py 用的是 `datetime.now(timezone.utc)`，同一项目两种写法
-
-8. **健壮性 — `articles.py` limit 无上限、无分页**
-   - `?limit=10000000` 会打爆内存，没有 offset 无法翻页
-
-9. **健壮性 — `knowledge.py` 空向量库无提示**
-   - 检索返回 0 条时，LLM 拿着空 context 可能编造答案，应提前返回提示
+4. **`pipeline.py` seed 不走 DI** — `rebuild_index` 通过 `Depends` 注入，但 `seed_sample_data` 直接在函数体内 `SeedService()`
+5. **`pipeline.py` 返回裸 dict** — 其他端点都用 Pydantic `response_model`，OpenAPI schema 不一致
+6. **`report_service.py` 方法名与行为不匹配** — `file_store.save_json(...)` 保存的是 `.md` 文件
+7. **`report_service.py` 使用已废弃的 `datetime.utcnow()`** — `seed_service.py` 已用 `datetime.now(timezone.utc)`
+8. **`articles.py` limit 无上限、无分页** — `?limit=10000000` 会打爆内存
+9. **`knowledge.py` 空向量库无提示** — 检索返回 0 条时 LLM 可能编造答案
 
 ### 低优先级
 
-10. **代码设计 — `main.py` `create_app()` 工厂形同虚设**
-    - 工厂函数定义了，但模块层立即 `app = create_app()` 实例化，测试无法注入配置
-
-11. **代码设计 — `report_service.py` 日报文件名会互相覆盖**
-    - 格式是 `daily_report_{date}.md`，同一天多次请求会覆盖前面的结果
-
-12. **可观测性 — 无请求日志中间件**
-    - 无 request ID / correlation ID，无法串联请求链路
-
-13. **可观测性 — LLM 调用无日志**
-    - 没有记录 prompt、response、token 用量、延迟，调试 prompt 和控制成本时完全无法追溯
-
-14. **安全性 — 无 rate limiting**
-    - query 端点调外部 API 有费用，无限调用有成本风险
+10. **`main.py` `create_app()` 工厂形同虚设** — 模块层立即实例化，测试无法注入配置
+11. **日报文件名会互相覆盖** — 格式是 `daily_report_{date}.md`，同一天多次请求覆盖
+12. **无请求日志中间件** — 无 request ID / correlation ID
+13. **LLM 调用无日志** — 无 prompt、response、token 用量记录
+14. **无 rate limiting** — query 端点调外部 API 有费用，无限调用有成本风险
 
 ## 后续规划
 
 ### 混合检索增强
-
-主动引入基于 BM25 的稀疏检索 + 稠密向量的 RRF 融合策略，弥补纯向量检索对关键词匹配的不足。预留 Cross-Encoder 重排序接口，在粗排后对 top-k 做精排，提升检索精度。
+引入 BM25 稀疏检索 + 稠密向量的 RRF 融合策略，预留 Cross-Encoder 重排序接口。
 
 ### MCP 协议封装
+核心情报能力已通过 MCP 封装，可被 Claude Desktop 等作为"情报中台"直接调用。后续结合开源爬虫工具和浏览器内核增强爬虫能力。
 
-核心情报能力（问答、日报、爬取）已通过 MCP 协议封装，可被 Claude Desktop 等 AI 助手作为"情报中台"直接调用。后续结合大热的开源爬虫工具和浏览器内核增强爬虫能力，覆盖 JS 渲染页面和反爬场景。
+### 流式输出
+问答端点实现 SSE 流式输出，前端配合 React Suspense 和 streaming SSR。
